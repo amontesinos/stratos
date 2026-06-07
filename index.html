@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Stratos, to Scale</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>" />
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --paper:#f4efe6; --paper-2:#ece5d8; --ink:#1c1a17; --ink-soft:#5c574e; --rule:#d7cebd;
+    --cool:#2b3a55; --cool-deep:#1d2942; --ember:#c1361d; --ember-bright:#e4572e; --muted:#9a8f7c;
+    --shadow:0 8px 30px rgba(28,26,23,.18);
+    --serif:'Fraunces', Georgia, 'Times New Roman', serif;
+    --sans:'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+    --mono:'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{font-family:var(--sans);color:var(--ink);background:var(--paper);overflow:hidden}
+
+  #map{position:absolute;inset:0;background:var(--paper-2);z-index:0}
+  .leaflet-control-attribution{background:rgba(244,239,230,.82)!important;font-family:var(--mono);font-size:9.5px;color:var(--ink-soft)!important}
+  .leaflet-control-attribution a{color:var(--cool)!important}
+
+  #panel{position:absolute;top:14px;left:14px;z-index:1000;width:330px;max-width:calc(100vw - 28px);
+    background:var(--paper);border:1px solid var(--rule);border-radius:4px;box-shadow:var(--shadow);
+    max-height:calc(100vh - 28px);display:flex;flex-direction:column;overflow:hidden}
+  .phead{padding:16px 18px 12px;border-bottom:1px solid var(--rule);position:relative}
+  .kicker{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ember);font-weight:600}
+  h1{font-family:var(--serif);font-weight:900;font-size:27px;line-height:.98;margin:5px 0 4px;letter-spacing:-.01em}
+  .sub{font-size:11.5px;color:var(--ink-soft);line-height:1.35}
+  .pbody{padding:14px 18px 16px;overflow-y:auto}
+
+  .group{margin-bottom:16px}
+  .label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;margin-bottom:7px}
+
+  .seg{display:flex;border:1px solid var(--cool);border-radius:3px;overflow:hidden}
+  .seg button{flex:1;border:0;background:transparent;color:var(--cool);font-family:var(--sans);font-size:12.5px;font-weight:600;padding:8px 4px;cursor:pointer;transition:.15s}
+  .seg button + button{border-left:1px solid var(--cool)}
+  .seg button.on{background:var(--cool);color:var(--paper)}
+  .seg.ember{border-color:var(--ember)}
+  .seg.ember button{color:var(--ember)}
+  .seg.ember button + button{border-left-color:var(--ember)}
+  .seg.ember button.on{background:var(--ember);color:var(--paper)}
+  #plan button{font-size:11.5px;line-height:1.28;padding:8px 7px}
+
+  select{width:100%;font-family:var(--sans);font-size:13px;padding:8px 9px;border:1px solid var(--rule);border-radius:3px;background:var(--paper-2);color:var(--ink);cursor:pointer}
+
+  .toggle{display:flex;align-items:center;gap:9px;padding:6px 0;cursor:pointer;user-select:none}
+  .toggle input{appearance:none;width:34px;height:19px;border-radius:19px;background:var(--rule);position:relative;cursor:pointer;flex:none;transition:.18s;margin:0}
+  .toggle input:checked{background:var(--ember)}
+  .toggle input::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:var(--paper);transition:.18s}
+  .toggle input:checked::after{left:17px}
+  .toggle .tx{font-size:12.5px;line-height:1.25}
+  .toggle .tx small{display:block;color:var(--ink-soft);font-size:10.5px}
+
+  hr{border:0;border-top:1px solid var(--rule);margin:15px 0}
+
+  .bigissue{background:rgba(193,54,29,.08);border:1px solid rgba(193,54,29,.35);border-left:4px solid var(--ember);border-radius:0 4px 4px 0;padding:11px 13px;margin-bottom:16px}
+  .bigissue .bl{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ember);font-weight:600;margin-bottom:5px}
+  .bigissue p{margin:0;font-size:13px;line-height:1.45;color:var(--ink)}
+  .bigissue b{font-family:var(--mono);font-weight:600}
+
+  .compare{font-size:12.5px;line-height:1.5;color:var(--ink);background:var(--paper-2);border-left:3px solid var(--cool);padding:9px 11px;border-radius:0 3px 3px 0}
+  .compare b{font-family:var(--mono);font-weight:600}
+
+  .stat{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px dotted var(--rule)}
+  .stat:last-child{border-bottom:0}
+  .stat .k{font-size:11.5px;color:var(--ink-soft);max-width:50%}
+  .stat .v{font-family:var(--mono);font-size:14px;font-weight:600;text-align:right;color:var(--ink)}
+  .stat .v.ember{color:var(--ember)}
+  .stat .v small{font-family:var(--sans);font-weight:400;font-size:10px;color:var(--ink-soft);display:block}
+
+  .note{font-size:10.5px;color:var(--ink-soft);line-height:1.4;font-style:italic;margin-top:8px}
+  .src{font-family:var(--mono);font-size:10px;color:var(--ink-soft);line-height:1.55}
+  .src b{color:var(--ink)} .src p{margin:0 0 7px}
+
+  .gloss{margin-top:8px}
+  .gloss dt{font-family:var(--sans);font-weight:600;font-size:12px;color:var(--ink);margin-top:10px}
+  .gloss dd{margin:2px 0 0;font-size:11px;line-height:1.45;color:var(--ink-soft)}
+
+  .landlist{margin:2px 0 0;padding-left:18px}
+  .landlist li{font-size:11.5px;line-height:1.46;color:var(--ink-soft);margin-bottom:7px}
+  .landlist li b{color:var(--ink);font-weight:600}
+
+  details{margin-top:6px}
+  summary{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--cool);cursor:pointer;font-weight:600;padding:4px 0}
+  summary::marker{color:var(--ember)}
+
+  .disclaimer{margin-top:14px;padding-top:12px;border-top:1px solid var(--rule);font-size:10px;line-height:1.45;color:var(--ink-soft)}
+
+  #legend{position:absolute;bottom:14px;right:14px;z-index:1000;background:var(--paper);border:1px solid var(--rule);border-radius:4px;box-shadow:var(--shadow);padding:10px 12px;font-size:11px;max-width:235px}
+  #legend .row{display:flex;align-items:center;gap:8px;margin:4px 0}
+  #legend .sw{width:16px;height:11px;border-radius:2px;flex:none}
+  #legend .ttl{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:5px;font-weight:600}
+
+  #collapse{position:absolute;top:12px;right:12px;border:1px solid var(--rule);background:var(--paper-2);border-radius:3px;width:26px;height:26px;cursor:pointer;font-size:15px;line-height:1;color:var(--ink-soft)}
+  body.collapsed #panel .pbody{display:none}
+  body.collapsed #panel{width:auto}
+
+  .dd-handle{display:grid;place-items:center}
+  .dd-core{width:15px;height:15px;border-radius:50%;background:var(--ember);border:2px solid var(--paper);box-shadow:0 0 0 1px var(--ember-bright)}
+  .dd-pulse{position:absolute;width:15px;height:15px;border-radius:50%;background:var(--ember-bright);animation:pulse 2.4s ease-out infinite;pointer-events:none}
+  @keyframes pulse{0%{transform:scale(1);opacity:.55}100%{transform:scale(5.5);opacity:0}}
+
+  .zone-tip{width:250px!important;max-width:80vw!important;white-space:normal!important;font-family:var(--sans);font-size:12px;line-height:1.5;color:var(--ink);background:var(--paper);border:1px solid var(--ember);border-radius:5px;padding:12px 14px;box-shadow:var(--shadow)}
+  .zone-tip b{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ember);margin-bottom:7px}
+  .zone-tip.leaflet-tooltip-top:before{border-top-color:var(--ember)}
+  .zone-tip.leaflet-tooltip-bottom:before{border-bottom-color:var(--ember)}
+
+  .parcel-lbl{background:rgba(244,239,230,.92)!important;border:1px solid var(--rule)!important;border-radius:3px;box-shadow:none!important;font-family:var(--mono);font-size:9px;line-height:1.25;color:var(--ink-soft);font-weight:600;text-align:center;padding:3px 6px}
+  .parcel-lbl:before{display:none!important}
+
+  @media (max-width:560px){
+    #panel{top:10px;left:10px;right:10px;width:auto;max-width:none}
+    #legend{display:none}
+    h1{font-size:23px}
+  }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<div id="panel">
+  <button id="collapse" title="Collapse / expand">▾</button>
+  <div class="phead">
+    <div class="kicker">Box Elder County, Utah</div>
+    <h1>Stratos, to Scale</h1>
+    <div class="sub">Drag the data center onto any Utah town. Every impact figure below is sourced — open “About the data.”</div>
+  </div>
+
+  <div class="pbody">
+    <div class="bigissue">
+      <div class="bl">The Big Issue</div>
+      <p>Yes, the land was cut in half — from 40,000 acres (three parcels) to about 20,000 (one parcel in Hansel Valley). But the dropped parcels were mostly empty buffer and a wildlife area near Locomotive Springs, and about half of what's left is set aside as open space. The part actually developed — roughly <b>10,000 acres on 9 gigawatts</b> — hasn't changed, and neither has its water, heat, or pollution. A smaller property doesn't mean a smaller impact.</p>
+    </div>
+
+    <div class="group">
+      <div class="label">Project area</div>
+      <div class="seg" id="plan">
+        <button data-plan="20k" class="on">New Plan: 20,000 acres</button>
+        <button data-plan="40k">Original Plan: 40,000 acres</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="label">Footprint view</div>
+      <div class="seg" id="view">
+        <button data-view="blob" class="on">Single blob</button>
+        <button data-view="parcels">Real parcels</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="label">Drop it on…</div>
+      <select id="city"></select>
+    </div>
+
+    <div class="group">
+      <div class="label">Layers</div>
+      <label class="toggle"><input type="checkbox" id="tImpact" checked><span class="tx">Local impact zone<small>illustrative · same under both plans</small></span></label>
+      <label class="toggle"><input type="checkbox" id="tDev" checked><span class="tx">Developed area<small>~10,000 acres actually built on — roughly the same under both plans</small></span></label>
+    </div>
+
+    <div class="compare" id="compare">—</div>
+
+    <hr>
+
+    <div class="group">
+      <div class="label">Gas tech (drives emissions)</div>
+      <div class="seg ember" id="scenario">
+        <button data-sc="cct" class="on">Turbines</button>
+        <button data-sc="rice">Engines</button>
+      </div>
+      <div class="note" id="scNote"></div>
+    </div>
+
+    <div class="group">
+      <div class="label">At full build · 9 gigawatts</div>
+      <div class="stat"><span class="k">Electricity needed</span><span class="v ember">9 GW<small>about 2× the whole state's normal power use</small></span></div>
+      <div class="stat"><span class="k" id="kCO2">Carbon dioxide (CO₂)</span><span class="v ember" id="vCO2">—</span></div>
+      <div class="stat"><span class="k">Water used</span><span class="v" id="vH2O">—</span></div>
+      <div class="stat"><span class="k">Smog pollution (NOx)</span><span class="v" id="vNOx">—</span></div>
+      <div class="stat"><span class="k">Heat dumped locally</span><span class="v ember">~16 GW<small>waste heat from the computers + gas plant</small></span></div>
+      <div class="stat"><span class="k">Local temperature</span><span class="v ember">+8–12°F night<small>+2–5°F by day · Davies' analysis, reviewed by BYU's Ben Abbott</small></span></div>
+    </div>
+
+    <div class="group">
+      <div class="label">What happens to the land</div>
+      <ul class="landlist">
+        <li><b>Drier nights.</b> Warmer nights stop the dew that desert plants and soil rely on, so the ground dries out.</li>
+        <li><b>More evaporation.</b> The whole basin loses more water — hard on a watershed already in trouble.</li>
+        <li><b>Living soil dies off.</b> The natural crust that holds desert ground together can disappear.</li>
+        <li><b>Wildlife loses habitat.</b> Sage-grouse lose winter range and native sagebrush struggles to grow back.</li>
+        <li><b>Weeds and wildfire.</b> Invasive cheatgrass spreads, which means more fires.</li>
+        <li><b>More dust.</b> As the valley and the shrinking Great Salt Lake dry out, more dust blows into the air.</li>
+      </ul>
+      <div class="src" style="margin-top:2px">From Dr. Davies' thermal analysis (the drying effects) and Ben Abbott's warning about dust from exposed Great Salt Lake lakebed.</div>
+    </div>
+
+    <details>
+      <summary>About the data ▸</summary>
+      <div class="src" style="margin-top:8px">
+        <p><b>Exact:</b> footprint area is pure geometry (1 ac = 4,046.86 m²). Shapes are area-accurate but illustrative. Switch to <b>Real parcels</b> for the actual three-parcel layout: the central one is Hansel Valley (kept); the two outliers — Locomotive Springs (~19,430 ac, north) and a small strip by I-84 (~620 ac, west) — were dropped in the June 2026 cut. Parcel <i>sizes</i> are to scale; their spacing and exact shape are approximate.</p>
+        <p><b>Acreage:</b> the project area was ~40,000 acres across three parcels; on June 4, 2026 the developer agreed to cut it to ~20,000 (one parcel). Of that, about 10,000 acres would actually be developed and ~10,000 set aside; Phase 1 buildings are under 2,000 acres.</p>
+        <p><b>Sourced estimates:</b> water, CO₂ and NOx are Utah Clean Energy modeling (May 2026) across two possible gas technologies. Power-generation only — excludes data-center cooling water and methane leakage. The developer hasn't confirmed which technology.</p>
+        <p><b>Heat & temperature:</b> from Dr. Rob Davies' preliminary thermal analysis, published by Grow the Flow (May 7, 2026). Assuming a 55%-efficient gas plant with industrial "dry cooling," he estimates a ~16 GW thermal load (9 GW computing + 7–8 GW waste heat) and, for Hansel Valley's bowl-shaped basin, daytime warming of +2–5°F and nighttime warming of +8–12°F (heat trapped at night by temperature inversions). BYU ecologist Ben Abbott — executive director of Grow the Flow — independently reviewed the work. It is still preliminary and not formally peer-reviewed; Abbott says the full facility details are needed to confirm it. Some early coverage cited a higher +28°F worst-case night figure that is <b>not</b> in the analysts' summary, so this tool uses their +8–12°F range. The impact zone is illustrative — heat and air quality fall off with distance — and does not change between the 40k and 20k plans because the 9 GW doesn't.</p>
+        <p><b>Note:</b> CO₂ warms globally, not in a ring; NOx disperses on wind. City-size comparisons are approximate.</p>
+        <p><b>Sources:</b> Utah Clean Energy · R. Davies thermal analysis via Grow the Flow (May 2026) · B. Abbott, BYU · Salt Lake Tribune · KSL · Box Elder County · MIDA · Sen. Pres. Adams letter (Jun 2026).</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Glossary ▸</summary>
+      <dl class="gloss">
+        <dt>Carbon dioxide (CO₂)</dt>
+        <dd>A gas made whenever you burn fuel like natural gas. It isn't the part that makes local air hard to breathe — instead it spreads around the whole planet and traps heat, which warms the Earth.</dd>
+        <dt>NOx (nitrogen oxides)</dt>
+        <dd>Gases made when fuel burns very hot. They create smog and tiny bits of soot that are bad for your lungs and heart. Measured here in tons per year.</dd>
+        <dt>Professor Robert Davies</dt>
+        <dd>A physicist at Utah State University who studies climate and energy. He prepared the preliminary estimate of how much the plant's waste heat could warm Hansel Valley. It's still a first estimate (not formally peer-reviewed), but a second scientist has reviewed it.</dd>
+        <dt>Professor Ben Abbott</dt>
+        <dd>An ecologist at Brigham Young University and head of Grow the Flow, a nonpartisan group working to save the Great Salt Lake. He reviewed Davies' analysis and explained what the heat and drying could do to the land, plants, and wildlife.</dd>
+        <dt>GW (gigawatt)</dt>
+        <dd>A way to measure electric power — how much electricity is being used at once. One gigawatt is about what a big power plant makes. All of Utah usually uses about 4 GW; this project wants 9 GW.</dd>
+        <dt>Project area vs. developed area</dt>
+        <dd>The "project area" is all the land set aside (originally 40,000 acres in three parcels; now about 20,000 in one). The "developed area" is the part actually built on — roughly 10,000 acres of data center and power plant. The June 2026 cut shrank the project area, not the developed part.</dd>
+        <dt>Turbines vs. engines (the gas tech)</dt>
+        <dd>Two machines that burn natural gas to make electricity. Combined-cycle turbines are cleaner but take 5–7 years to build. Reciprocating engines can be built right away but pollute more. The developer hasn't said which they'll pick, so the pollution numbers depend on that choice.</dd>
+        <dt>Waste-heat load</dt>
+        <dd>No machine turns all its energy into useful work — the leftover escapes as heat. Computers turn almost all their power into heat, and the gas plant adds more. Together that's about 16 GW of heat flowing into the valley, which could push local temperatures up.</dd>
+      </dl>
+    </details>
+
+    <div class="disclaimer">Independent project — not affiliated with Stratos, O'Leary Digital, MIDA, or any government agency. The real site is in Hansel Valley, Box Elder County. All figures are sourced estimates; see “About the data.”</div>
+  </div>
+</div>
+
+<div id="legend">
+  <div class="ttl">Legend</div>
+  <div class="row"><span class="sw" style="background:rgba(43,58,85,.18);border:1.5px solid #2b3a55"></span> Project area / parcel</div>
+  <div class="row"><span class="sw" style="background:rgba(29,41,66,.34);border:1.5px solid #1d2942"></span> Developed area</div>
+  <div class="row"><span class="sw" style="background:rgba(154,143,124,.18);border:1.5px dashed #9a8f7c"></span> Removed parcel (new plan)</div>
+  <div class="row"><span class="sw" style="background:rgba(193,54,29,.2);border:1.5px dashed #c1361d"></span> Impact zone (illustrative)</div>
+</div>
+
+<script>
+/* ----------------------------------------------------------------------
+   STRATOS, TO SCALE  —  v3 (accurate acreage + parcels view)
+   Single-file. Leaflet only. Deploys as-is on GitHub Pages.
+---------------------------------------------------------------------- */
+const ACRE_M2 = 4046.8564;
+const MI_M = 1609.34;
+
+// Plans = total PROJECT AREA. 40k = original (3 parcels); 20k = after June 2026 cut (1 parcel).
+const PLANS = {
+  '20k': { acres: 20000, label: '20,000-acre plan (new)' },
+  '40k': { acres: 40000, label: '40,000-acre plan (original)' }
+};
+const BUILT_ACRES = 10000; // developed area (data center + power). ~same under both plans.
+const DEV_TIP = 'Developed area · ~10,000 acres (data center + power; Phase 1 buildings under 2,000) — about the same under both plans';
+
+// The three real parcels. Sizes accurate; offsets are an APPROXIMATE relative layout.
+const PARCELS = [
+  { name:'Hansel Valley',      acres:20000, dN:0,      dE:0,      kept:true  },  // SE anchor, kept
+  { name:'Locomotive Springs', acres:19430, dN:24000,  dE:-6000,  kept:false },  // north, removed
+  { name:'I-84 strip',         acres:620,   dN:-5000,  dE:-24000, kept:false }   // west, removed
+];
+
+const CITIES = {
+  slc:      { name: 'Salt Lake City', ll:[40.7608,-111.8910], area:285 },
+  logan:    { name: 'Logan',          ll:[41.7370,-111.8338], area:47  },
+  ogden:    { name: 'Ogden',          ll:[41.2230,-111.9738], area:70  },
+  provo:    { name: 'Provo',          ll:[40.2338,-111.6585], area:117 },
+  brigham:  { name: 'Brigham City',   ll:[41.5102,-112.0155], area:67  },
+  parkcity: { name: 'Park City',      ll:[40.6461,-111.4980], area:52  },
+  stgeorge: { name: 'St. George',     ll:[37.0965,-113.5684], area:204 },
+  site:     { name: '★ Real site — Hansel Valley (approx.)', ll:[41.700,-112.550], area:null }
+};
+
+const SCENARIOS = {
+  cct: { co2:'+55%', co2sub:"of Utah's CO₂ — 30.2 million tons a year",
+         h2o:'16.6 billion', h2osub:'gallons a year · about 25,000 pools',
+         nox:'1,857 tons', noxsub:'of smog pollution a year',
+         note:'Cleaner of the two, but takes 5–7 years to build.' },
+  rice:{ co2:'+75%', co2sub:"of Utah's CO₂ — 41 million tons a year",
+         h2o:'2 billion', h2osub:'gallons a year · about 3,000 pools',
+         nox:'12,000 tons', noxsub:'of smog pollution a year',
+         note:'Can be built now (the likely choice) — about twice all the smog pollution from Salt Lake County’s factories.' }
+};
+
+const BRYCE_ACRES = 35835;
+
+/* ---------- map ---------- */
+const map = L.map('map', { zoomControl:true }).setView(CITIES.slc.ll, 11);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  attribution:'© OpenStreetMap contributors © CARTO', subdomains:'abcd', maxZoom:19
+}).addTo(map);
+
+const impactLayer    = L.layerGroup().addTo(map);
+const footprintLayer = L.layerGroup().addTo(map);
+
+/* ---------- state ---------- */
+const state = {
+  plan:'20k', view:'blob', cityKey:'slc', center:L.latLng(CITIES.slc.ll),
+  showDev:true, showImpact:true, scenario:'cct'
+};
+
+/* ---------- organic blob geometry ---------- */
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function makeBlob(points, irregularity, seed){
+  const r=rng(seed);
+  const a1=r()*6.283, a2=r()*6.283, a3=r()*6.283, a4=r()*6.283;
+  const w2=0.5+r()*0.6, w3=0.4+r()*0.5, w5=0.2+r()*0.35;
+  const pts=[];
+  for(let i=0;i<points;i++){
+    const t=i/points*2*Math.PI;
+    let rr=1 + irregularity*(w2*Math.sin(2*t+a1)+w3*Math.sin(3*t+a2)+w5*Math.sin(5*t+a3)+0.15*Math.sin(7*t+a4));
+    pts.push({t, r:Math.max(0.6, rr)});
+  }
+  return pts;
+}
+function unitArea(blob){
+  let A=0;
+  for(let i=0;i<blob.length;i++){
+    const p=blob[i], q=blob[(i+1)%blob.length];
+    A += (p.r*Math.cos(p.t))*(q.r*Math.sin(q.t)) - (q.r*Math.cos(q.t))*(p.r*Math.sin(p.t));
+  }
+  return Math.abs(A)/2;
+}
+// Area-accurate polygon for any blob shape at any center.
+function blobPoly(center, areaM2, blob){
+  if(blob._ua===undefined) blob._ua = unitArea(blob);
+  const scale = Math.sqrt(areaM2 / blob._ua);
+  const coslat = Math.cos(center.lat*Math.PI/180);
+  return blob.map(p=>{
+    const xm=p.r*Math.cos(p.t)*scale, ym=p.r*Math.sin(p.t)*scale;
+    return [ center.lat + ym/111320, center.lng + xm/(111320*coslat) ];
+  });
+}
+const BLOB = makeBlob(56, 0.17, 73);                 // single-blob view
+const PARCEL_BLOBS = [ makeBlob(50,0.18,11), makeBlob(52,0.21,29), makeBlob(40,0.24,57) ];
+
+/* ---------- draggable handle ---------- */
+const handle = L.marker(state.center, {
+  draggable:true, zIndexOffset:1000,
+  icon:L.divIcon({ className:'dd-handle', iconSize:[15,15], html:'<div class="dd-pulse"></div><div class="dd-core"></div>' })
+}).addTo(map);
+handle.on('drag', e => { state.center = e.target.getLatLng(); renderShapes(); });
+handle.bindTooltip('Drag me onto your town', {direction:'top', offset:[0,-10]});
+
+/* ---------- render ---------- */
+function renderShapes(){
+  footprintLayer.clearLayers();
+  impactLayer.clearLayers();
+  const c = state.center;
+  const inter = !state.showImpact;   // footprints pass-through while impact zone is on
+
+  // impact zone (fixed scale, plan- & view-independent)
+  if(state.showImpact){
+    const ZONES = {
+      2: "<b>Closest zone · strongest effect</b>Right next to the plant, the air would get the hottest and the dirtiest. Heat pours off the computers and the gas engines, and on a calm night it can get trapped near the ground like a lid on a pot. The smoky pollution that's hard to breathe (called NOx) would be thickest here.",
+      4: "<b>Middle zone · medium effect</b>A few miles out, the extra heat and pollution are weaker than right by the plant — like standing farther from a campfire. But wind can still carry dirty air and haze this far, especially on bad-air days.",
+      6: "<b>Outer zone · weakest effect</b>Near the edge of the local effects. The extra heat and pollution are much weaker here, though some days the wind pushes smog and haze this way. The CO₂ doesn't stay local at all — it spreads around the whole planet and adds to global warming."
+    };
+    [[6,.05],[4,.09],[2,.14]].forEach(([mi,op])=>{
+      const zc = L.circle(c,{radius:mi*MI_M,stroke:false,fillColor:'#c1361d',fillOpacity:op})
+        .addTo(impactLayer)
+        .bindTooltip(ZONES[mi],{sticky:true,className:'zone-tip',direction:'right'});
+      // open away from center, with a 30px deadband so it doesn't flicker/flip near the center line
+      let dir='right';
+      zc.on('mousemove', ev=>{
+        const dx = map.latLngToContainerPoint(ev.latlng).x - map.latLngToContainerPoint(state.center).x;
+        if(dx>30) dir='right'; else if(dx<-30) dir='left';
+        zc.getTooltip().options.direction = dir;
+      });
+    });
+    L.circle(c,{radius:6*MI_M,fill:false,color:'#c1361d',weight:1.5,dashArray:'5 5',interactive:false}).addTo(impactLayer);
+  }
+
+  if(state.view==='parcels'){
+    const coslat = Math.cos(c.lat*Math.PI/180);
+    PARCELS.forEach((pc,i)=>{
+      const pcCenter = L.latLng(c.lat + pc.dN/111320, c.lng + pc.dE/(111320*coslat));
+      const dropped = (state.plan==='20k' && !pc.kept);
+      L.polygon(blobPoly(pcCenter, pc.acres*ACRE_M2, PARCEL_BLOBS[i]),{
+        color: dropped?'#9a8f7c':'#2b3a55', weight: dropped?1.5:2,
+        dashArray: dropped?'6 5':null,
+        fillColor: dropped?'#9a8f7c':'#2b3a55',
+        fillOpacity: dropped?0.05:(state.showImpact?0.10:0.16),
+        smoothFactor:1, interactive:inter
+      }).addTo(footprintLayer)
+        .bindTooltip(pc.name+' · '+pc.acres.toLocaleString()+' acres'+(dropped?' · removed in new plan':''),{sticky:true});
+      // label the two outlying parcels (the central Hansel Valley one is obvious)
+      if(i>0){
+        L.tooltip({permanent:true,direction:'center',className:'parcel-lbl',interactive:false})
+          .setLatLng(pcCenter)
+          .setContent(pc.name+'<br>'+pc.acres.toLocaleString()+' ac'+(dropped?' · removed':''))
+          .addTo(footprintLayer);
+      }
+    });
+    // developed core inside Hansel Valley (parcel-0 shape so it nests cleanly)
+    if(state.showDev){
+      L.polygon(blobPoly(c, BUILT_ACRES*ACRE_M2, PARCEL_BLOBS[0]),{
+        color:'#1d2942', weight:1.5, fillColor:'#1d2942', fillOpacity:0.34, smoothFactor:1, interactive:inter
+      }).addTo(footprintLayer).bindTooltip(DEV_TIP,{sticky:true});
+    }
+  } else {
+    // single-blob view
+    const areaM2 = PLANS[state.plan].acres * ACRE_M2;
+    L.polygon(blobPoly(c, areaM2, BLOB),{
+      color:'#2b3a55', weight:2, fillColor:'#2b3a55', fillOpacity:state.showImpact?0.10:0.16, smoothFactor:1, interactive:inter
+    }).addTo(footprintLayer)
+      .bindTooltip(PLANS[state.plan].label+' · '+(areaM2/1e6).toFixed(0)+' km²',{sticky:true});
+    if(state.showDev){
+      L.polygon(blobPoly(c, BUILT_ACRES*ACRE_M2, BLOB),{
+        color:'#1d2942', weight:1.5, fillColor:'#1d2942', fillOpacity:0.34, smoothFactor:1, interactive:inter
+      }).addTo(footprintLayer).bindTooltip(DEV_TIP,{sticky:true});
+    }
+  }
+  updateCompare();
+}
+
+/* ---------- readouts ---------- */
+function updateCompare(){
+  const areaKm2 = (PLANS[state.plan].acres*ACRE_M2)/1e6;
+  const city = CITIES[state.cityKey];
+  const acres = PLANS[state.plan].acres;
+  let html = `This is <b>${acres.toLocaleString()} acres</b> — about <b>${(areaKm2/2.59).toFixed(0)} square miles</b> (${areaKm2.toFixed(0)} km²).`;
+  if(city.area){
+    const x = areaKm2/city.area;
+    html += x>=1 ? ` That's about <b>${x.toFixed(1)}×</b> the area of ${city.name}.`
+                 : ` It covers roughly <b>${Math.round(x*100)}%</b> of ${city.name}.`;
+  }
+  if(state.plan==='40k') html += ` Larger than Bryce Canyon National Park (${BRYCE_ACRES.toLocaleString()} acres).`;
+  document.getElementById('compare').innerHTML = html;
+}
+function updateStats(){
+  const s = SCENARIOS[state.scenario];
+  document.getElementById('vCO2').innerHTML = `${s.co2}<small>${s.co2sub}</small>`;
+  document.getElementById('vH2O').innerHTML = `${s.h2o}<small>${s.h2osub}</small>`;
+  document.getElementById('vNOx').innerHTML = `${s.nox}<small>${s.noxsub}</small>`;
+  document.getElementById('scNote').textContent = s.note;
+}
+
+/* ---------- dropdown ---------- */
+const citySel = document.getElementById('city');
+Object.entries(CITIES).forEach(([k,v])=>{ const o=document.createElement('option'); o.value=k; o.textContent=v.name; citySel.appendChild(o); });
+citySel.value = state.cityKey;
+
+/* ---------- controls ---------- */
+citySel.addEventListener('change', e=>{
+  state.cityKey = e.target.value;
+  const c = CITIES[state.cityKey];
+  state.center = L.latLng(c.ll); handle.setLatLng(c.ll);
+  map.flyTo(c.ll, 11, {duration:.8}); renderShapes();
+});
+document.querySelectorAll('#plan button').forEach(b=>{
+  b.addEventListener('click', ()=>{ document.querySelectorAll('#plan button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); state.plan=b.dataset.plan; renderShapes(); });
+});
+document.querySelectorAll('#view button').forEach(b=>{
+  b.addEventListener('click', ()=>{ document.querySelectorAll('#view button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); state.view=b.dataset.view; renderShapes(); });
+});
+document.querySelectorAll('#scenario button').forEach(b=>{
+  b.addEventListener('click', ()=>{ document.querySelectorAll('#scenario button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); state.scenario=b.dataset.sc; updateStats(); });
+});
+document.getElementById('tDev').addEventListener('change', e=>{state.showDev=e.target.checked; renderShapes();});
+document.getElementById('tImpact').addEventListener('change', e=>{state.showImpact=e.target.checked; renderShapes();});
+document.getElementById('collapse').addEventListener('click', ()=>{
+  document.body.classList.toggle('collapsed');
+  document.getElementById('collapse').textContent = document.body.classList.contains('collapsed') ? '▸' : '▾';
+});
+
+/* ---------- go ---------- */
+updateStats();
+renderShapes();
+</script>
+</body>
+</html>
