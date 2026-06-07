@@ -116,13 +116,28 @@
   .zone-tip.leaflet-tooltip-top:before{border-top-color:var(--ember)}
   .zone-tip.leaflet-tooltip-bottom:before{border-bottom-color:var(--ember)}
 
+  /* tap-to-open version of the zone explainer, used on touch devices */
+  .zone-pop .leaflet-popup-content-wrapper{background:var(--paper);border:1px solid var(--ember);border-radius:6px;box-shadow:var(--shadow)}
+  .zone-pop .leaflet-popup-content{margin:13px 15px;font-family:var(--sans);font-size:13.5px;line-height:1.5;color:var(--ink)}
+  .zone-pop .leaflet-popup-content b{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ember);margin-bottom:7px}
+  .zone-pop .leaflet-popup-tip{background:var(--paper);border:1px solid var(--ember)}
+  .zone-pop a.leaflet-popup-close-button{color:var(--ink-soft);font-size:20px;width:26px;height:26px;padding:5px 0 0}
+
   .parcel-lbl{background:rgba(244,239,230,.92)!important;border:1px solid var(--rule)!important;border-radius:3px;box-shadow:none!important;font-family:var(--mono);font-size:9px;line-height:1.25;color:var(--ink-soft);font-weight:600;text-align:center;padding:3px 6px}
   .parcel-lbl:before{display:none!important}
 
   @media (max-width:560px){
-    #panel{top:10px;left:10px;right:10px;width:auto;max-width:none}
+    #panel{top:8px;left:8px;right:8px;width:auto;max-width:none;max-height:84vh}
     #legend{display:none}
-    h1{font-size:23px}
+    h1{font-size:22px}
+    .phead{cursor:pointer;padding-right:46px}      /* whole bar toggles; room for the chevron */
+    #collapse{width:34px;height:34px;font-size:18px;top:10px;right:10px}
+    /* collapsed = slim title bar so the map is usable */
+    body.collapsed #panel{max-height:none}
+    body.collapsed .phead{padding:12px 46px 12px 16px}
+    body.collapsed h1{font-size:18px;margin:1px 0 0}
+    body.collapsed .kicker{font-size:9px}
+    body.collapsed .sub{display:none}
   }
 </style>
 </head>
@@ -260,6 +275,9 @@
 const ACRE_M2 = 4046.8564;
 const MI_M = 1609.34;
 
+// true on phones/tablets (no hovering pointer) → use tap-to-open popups instead of hover tooltips
+const NOHOVER = window.matchMedia('(hover: none)').matches;
+
 // Plans = total PROJECT AREA. 40k = original (3 parcels); 20k = after June 2026 cut (1 parcel).
 const PLANS = {
   '20k': { acres: 20000, label: '20,000-acre plan (new)' },
@@ -372,16 +390,20 @@ function renderShapes(){
       6: "<b>Outer zone · weakest effect</b>Near the edge of the local effects. The extra heat and pollution are much weaker here, though some days the wind pushes smog and haze this way. The CO₂ doesn't stay local at all — it spreads around the whole planet and adds to global warming."
     };
     [[6,.05],[4,.09],[2,.14]].forEach(([mi,op])=>{
-      const zc = L.circle(c,{radius:mi*MI_M,stroke:false,fillColor:'#c1361d',fillOpacity:op})
-        .addTo(impactLayer)
-        .bindTooltip(ZONES[mi],{sticky:true,className:'zone-tip',direction:'right'});
-      // open away from center, with a 30px deadband so it doesn't flicker/flip near the center line
-      let dir='right';
-      zc.on('mousemove', ev=>{
-        const dx = map.latLngToContainerPoint(ev.latlng).x - map.latLngToContainerPoint(state.center).x;
-        if(dx>30) dir='right'; else if(dx<-30) dir='left';
-        zc.getTooltip().options.direction = dir;
-      });
+      const zc = L.circle(c,{radius:mi*MI_M,stroke:false,fillColor:'#c1361d',fillOpacity:op}).addTo(impactLayer);
+      if(NOHOVER){
+        // touch: no hover — tap a zone to open its explanation
+        zc.bindPopup(ZONES[mi], {className:'zone-pop', maxWidth:Math.min(290, window.innerWidth-60), autoPan:true, autoPanPadding:[14,14]});
+      } else {
+        zc.bindTooltip(ZONES[mi],{sticky:true,className:'zone-tip',direction:'right'});
+        // open away from center, with a 30px deadband so it doesn't flicker/flip near the center line
+        let dir='right';
+        zc.on('mousemove', ev=>{
+          const dx = map.latLngToContainerPoint(ev.latlng).x - map.latLngToContainerPoint(state.center).x;
+          if(dx>30) dir='right'; else if(dx<-30) dir='left';
+          zc.getTooltip().options.direction = dir;
+        });
+      }
     });
     L.circle(c,{radius:6*MI_M,fill:false,color:'#c1361d',weight:1.5,dashArray:'5 5',interactive:false}).addTo(impactLayer);
   }
@@ -474,10 +496,22 @@ document.querySelectorAll('#scenario button').forEach(b=>{
 });
 document.getElementById('tDev').addEventListener('change', e=>{state.showDev=e.target.checked; renderShapes();});
 document.getElementById('tImpact').addEventListener('change', e=>{state.showImpact=e.target.checked; renderShapes();});
-document.getElementById('collapse').addEventListener('click', ()=>{
-  document.body.classList.toggle('collapsed');
-  document.getElementById('collapse').textContent = document.body.classList.contains('collapsed') ? '▸' : '▾';
+
+const isMobile = ()=> window.matchMedia('(max-width:560px)').matches;
+function setCollapsed(v){
+  document.body.classList.toggle('collapsed', v);
+  document.getElementById('collapse').textContent = v ? '▸' : '▾';
+}
+document.getElementById('collapse').addEventListener('click', e=>{
+  e.stopPropagation();                       // don't double-fire the header handler
+  setCollapsed(!document.body.classList.contains('collapsed'));
 });
+// on mobile the whole title bar is the tap target (the 26px arrow alone is too small/easy to miss)
+document.querySelector('.phead').addEventListener('click', ()=>{
+  if(isMobile()) setCollapsed(!document.body.classList.contains('collapsed'));
+});
+// start collapsed on mobile so the map is visible on load
+if(isMobile()) setCollapsed(true);
 
 /* ---------- go ---------- */
 updateStats();
