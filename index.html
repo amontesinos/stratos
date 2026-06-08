@@ -277,7 +277,7 @@
    STRATOS, TO SCALE  —  v3 (accurate acreage + parcels view)
    Single-file. Leaflet only. Deploys as-is on GitHub Pages.
 ---------------------------------------------------------------------- */
-const VERSION = 'v1.0';          // bump on every code change so a fresh deploy is obvious
+const VERSION = 'v1.1';          // bump on every code change so a fresh deploy is obvious
 const ACRE_M2 = 4046.8564;
 const MI_M = 1609.34;
 
@@ -412,19 +412,12 @@ function renderShapes(){
         autoPanPaddingBottomRight:[14,20],
         closeButton:true
       });
-      // Desktop hover preview: tooltip. Suppressed on touch (Android fires an emulated
-      // mouseover on tap) and while the popup is open, so it never strands off-screen on mobile.
-      zc.bindTooltip(ZONES[mi], {sticky:true, className:'zone-tip', direction:'right'});
+      // Desktop hover preview: tooltip pinned ABOVE the cursor. A FIXED direction never
+      // flips sides — Leaflet only auto-flips when direction is 'auto'. This removes the
+      // left/right flip glitch at the root. Suppressed on touch + while the popup is open.
+      zc.bindTooltip(ZONES[mi], {sticky:true, className:'zone-tip', direction:'top', offset:[0,-2]});
       zc.on('tooltipopen', ()=>{ if(POINTER!=='mouse' || zc.isPopupOpen()) zc.closeTooltip(); });
       zc.on('popupopen',  ()=> zc.closeTooltip());
-      // open away from center, with a 30px deadband so it doesn't flip near the center line
-      let dir='right';
-      zc.on('mousemove', ev=>{
-        if(POINTER!=='mouse') return;
-        const dx = map.latLngToContainerPoint(ev.latlng).x - map.latLngToContainerPoint(state.center).x;
-        if(dx>30) dir='right'; else if(dx<-30) dir='left';
-        zc.getTooltip().options.direction = dir;
-      });
     });
     L.circle(c,{radius:6*MI_M,fill:false,color:'#c1361d',weight:1.5,dashArray:'5 5',interactive:false}).addTo(impactLayer);
   }
