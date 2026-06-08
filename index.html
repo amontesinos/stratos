@@ -29,6 +29,9 @@
   #map{position:absolute;inset:0;background:var(--paper-2);z-index:0}
   .leaflet-control-attribution{background:rgba(244,239,230,.82)!important;font-family:var(--mono);font-size:9.5px;color:var(--ink-soft)!important}
   .leaflet-control-attribution a{color:var(--cool)!important}
+  /* kill Android's black tap-highlight box + focus ring on tapped map shapes */
+  .leaflet-container{-webkit-tap-highlight-color:transparent}
+  .leaflet-interactive:focus,.leaflet-interactive:focus-visible{outline:none}
 
   #panel{position:absolute;top:14px;left:14px;z-index:1000;width:330px;max-width:calc(100vw - 28px);
     background:var(--paper);border:1px solid var(--rule);border-radius:4px;box-shadow:var(--shadow);
@@ -275,9 +278,6 @@
 const ACRE_M2 = 4046.8564;
 const MI_M = 1609.34;
 
-// true on phones/tablets (no hovering pointer) → use tap-to-open popups instead of hover tooltips
-const NOHOVER = window.matchMedia('(hover: none)').matches;
-
 // Plans = total PROJECT AREA. 40k = original (3 parcels); 20k = after June 2026 cut (1 parcel).
 const PLANS = {
   '20k': { acres: 20000, label: '20,000-acre plan (new)' },
@@ -390,20 +390,19 @@ function renderShapes(){
       6: "<b>Outer zone · weakest effect</b>Near the edge of the local effects. The extra heat and pollution are much weaker here, though some days the wind pushes smog and haze this way. The CO₂ doesn't stay local at all — it spreads around the whole planet and adds to global warming."
     };
     [[6,.05],[4,.09],[2,.14]].forEach(([mi,op])=>{
-      const zc = L.circle(c,{radius:mi*MI_M,stroke:false,fillColor:'#c1361d',fillOpacity:op}).addTo(impactLayer);
-      if(NOHOVER){
-        // touch: no hover — tap a zone to open its explanation
-        zc.bindPopup(ZONES[mi], {className:'zone-pop', maxWidth:Math.min(290, window.innerWidth-60), autoPan:true, autoPanPadding:[14,14]});
-      } else {
-        zc.bindTooltip(ZONES[mi],{sticky:true,className:'zone-tip',direction:'right'});
-        // open away from center, with a 30px deadband so it doesn't flicker/flip near the center line
-        let dir='right';
-        zc.on('mousemove', ev=>{
-          const dx = map.latLngToContainerPoint(ev.latlng).x - map.latLngToContainerPoint(state.center).x;
-          if(dx>30) dir='right'; else if(dx<-30) dir='left';
-          zc.getTooltip().options.direction = dir;
+      // tap (mobile) or click (desktop) opens the explanation as a popup.
+      // popups auto-pan to stay fully on-screen and have a close button — unlike tooltips,
+      // which ran off the edge on mobile and depended on flaky touch detection.
+      L.circle(c,{radius:mi*MI_M,stroke:false,fillColor:'#c1361d',fillOpacity:op})
+        .addTo(impactLayer)
+        .bindPopup(ZONES[mi], {
+          className:'zone-pop',
+          maxWidth: Math.min(300, window.innerWidth - 48),
+          autoPan:true,
+          autoPanPaddingTopLeft:[14,68],     // clear the collapsed title bar
+          autoPanPaddingBottomRight:[14,20],
+          closeButton:true
         });
-      }
     });
     L.circle(c,{radius:6*MI_M,fill:false,color:'#c1361d',weight:1.5,dashArray:'5 5',interactive:false}).addTo(impactLayer);
   }
