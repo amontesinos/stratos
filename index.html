@@ -104,6 +104,7 @@
   #legend .row{display:flex;align-items:center;gap:8px;margin:4px 0}
   #legend .sw{width:16px;height:11px;border-radius:2px;flex:none}
   #legend .ttl{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:5px;font-weight:600}
+  #legend .legend-ver{margin-top:8px;padding-top:6px;border-top:1px solid var(--rule);font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--muted);text-align:right}
 
   #collapse{position:absolute;top:12px;right:12px;border:1px solid var(--rule);background:var(--paper-2);border-radius:3px;width:26px;height:26px;cursor:pointer;font-size:15px;line-height:1;color:var(--ink-soft)}
   body.collapsed #panel .pbody{display:none}
@@ -258,7 +259,7 @@
       </dl>
     </details>
 
-    <div class="disclaimer">Independent project — not affiliated with Stratos, O'Leary Digital, MIDA, or any government agency. The real site is in Hansel Valley, Box Elder County. All figures are sourced estimates; see “About the data.”</div>
+    <div class="disclaimer">Independent project — not affiliated with Stratos, O'Leary Digital, MIDA, or any government agency. The real site is in Hansel Valley, Box Elder County. All figures are sourced estimates; see “About the data.”<br><span id="verFoot" style="opacity:.7"></span></div>
   </div>
 </div>
 
@@ -268,6 +269,7 @@
   <div class="row"><span class="sw" style="background:rgba(29,41,66,.34);border:1.5px solid #1d2942"></span> Developed area</div>
   <div class="row"><span class="sw" style="background:rgba(154,143,124,.18);border:1.5px dashed #9a8f7c"></span> Removed parcel (new plan)</div>
   <div class="row"><span class="sw" style="background:rgba(193,54,29,.2);border:1.5px dashed #c1361d"></span> Impact zone (illustrative)</div>
+  <div class="legend-ver" id="ver"></div>
 </div>
 
 <script>
@@ -275,8 +277,18 @@
    STRATOS, TO SCALE  —  v3 (accurate acreage + parcels view)
    Single-file. Leaflet only. Deploys as-is on GitHub Pages.
 ---------------------------------------------------------------------- */
+const VERSION = 'v1.0';          // bump on every code change so a fresh deploy is obvious
 const ACRE_M2 = 4046.8564;
 const MI_M = 1609.34;
+
+// Track the real input type so hover tooltips stay desktop-only.
+// (CSS like `hover:none` is unreliable on Android; actual pointer events are not.)
+let POINTER = 'mouse';
+if (window.PointerEvent) {
+  const setPtr = e => { if (e.pointerType) POINTER = e.pointerType; };
+  window.addEventListener('pointerdown', setPtr, {capture:true, passive:true});
+  window.addEventListener('pointermove', setPtr, {capture:true, passive:true});
+}
 
 // Plans = total PROJECT AREA. 40k = original (3 parcels); 20k = after June 2026 cut (1 parcel).
 const PLANS = {
@@ -390,19 +402,29 @@ function renderShapes(){
       6: "<b>Outer zone · weakest effect</b>Near the edge of the local effects. The extra heat and pollution are much weaker here, though some days the wind pushes smog and haze this way. The CO₂ doesn't stay local at all — it spreads around the whole planet and adds to global warming."
     };
     [[6,.05],[4,.09],[2,.14]].forEach(([mi,op])=>{
-      // tap (mobile) or click (desktop) opens the explanation as a popup.
-      // popups auto-pan to stay fully on-screen and have a close button — unlike tooltips,
-      // which ran off the edge on mobile and depended on flaky touch detection.
-      L.circle(c,{radius:mi*MI_M,stroke:false,fillColor:'#c1361d',fillOpacity:op})
-        .addTo(impactLayer)
-        .bindPopup(ZONES[mi], {
-          className:'zone-pop',
-          maxWidth: Math.min(300, window.innerWidth - 48),
-          autoPan:true,
-          autoPanPaddingTopLeft:[14,68],     // clear the collapsed title bar
-          autoPanPaddingBottomRight:[14,20],
-          closeButton:true
-        });
+      const zc = L.circle(c,{radius:mi*MI_M,stroke:false,fillColor:'#c1361d',fillOpacity:op}).addTo(impactLayer);
+      // Tap (mobile) / click (desktop): popup. Auto-pans on-screen, has a close button.
+      zc.bindPopup(ZONES[mi], {
+        className:'zone-pop',
+        maxWidth: Math.min(300, window.innerWidth - 48),
+        autoPan:true,
+        autoPanPaddingTopLeft:[14,68],       // clear the collapsed title bar
+        autoPanPaddingBottomRight:[14,20],
+        closeButton:true
+      });
+      // Desktop hover preview: tooltip. Suppressed on touch (Android fires an emulated
+      // mouseover on tap) and while the popup is open, so it never strands off-screen on mobile.
+      zc.bindTooltip(ZONES[mi], {sticky:true, className:'zone-tip', direction:'right'});
+      zc.on('tooltipopen', ()=>{ if(POINTER!=='mouse' || zc.isPopupOpen()) zc.closeTooltip(); });
+      zc.on('popupopen',  ()=> zc.closeTooltip());
+      // open away from center, with a 30px deadband so it doesn't flip near the center line
+      let dir='right';
+      zc.on('mousemove', ev=>{
+        if(POINTER!=='mouse') return;
+        const dx = map.latLngToContainerPoint(ev.latlng).x - map.latLngToContainerPoint(state.center).x;
+        if(dx>30) dir='right'; else if(dx<-30) dir='left';
+        zc.getTooltip().options.direction = dir;
+      });
     });
     L.circle(c,{radius:6*MI_M,fill:false,color:'#c1361d',weight:1.5,dashArray:'5 5',interactive:false}).addTo(impactLayer);
   }
@@ -513,6 +535,8 @@ document.querySelector('.phead').addEventListener('click', ()=>{
 if(isMobile()) setCollapsed(true);
 
 /* ---------- go ---------- */
+document.getElementById('ver').textContent = VERSION;
+document.getElementById('verFoot').textContent = VERSION;
 updateStats();
 renderShapes();
 </script>
