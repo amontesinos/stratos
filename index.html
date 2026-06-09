@@ -27,7 +27,7 @@
   body{font-family:var(--sans);color:var(--ink);background:var(--paper);overflow:hidden}
 
   #map{position:absolute;inset:0;background:var(--paper-2);z-index:0}
-  .leaflet-control-attribution{background:rgba(244,239,230,.82)!important;font-family:var(--mono);font-size:9.5px;color:var(--ink-soft)!important}
+  .leaflet-control-attribution{background:rgba(244,239,230,.82)!important;font-family:var(--mono);font-size:10.5px;color:var(--ink-soft)!important}
   .leaflet-control-attribution a{color:var(--cool)!important}
   /* kill Android's black tap-highlight box + focus ring on tapped map shapes */
   .leaflet-container{-webkit-tap-highlight-color:transparent}
@@ -37,14 +37,14 @@
     background:var(--paper);border:1px solid var(--rule);border-radius:4px;box-shadow:var(--shadow);
     max-height:calc(100vh - 28px);display:flex;flex-direction:column;overflow:hidden}
   .phead{padding:16px 18px 12px;border-bottom:1px solid var(--rule);position:relative}
-  .kicker{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ember);font-weight:600}
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ember);font-weight:600}
   h1{font-family:var(--serif);font-weight:900;font-size:27px;line-height:.98;margin:5px 0 4px;letter-spacing:-.01em}
-  .sub{font-size:11.5px;color:var(--ink-soft);line-height:1.35}
+  .sub{font-size:12.5px;color:var(--ink-soft);line-height:1.35}
   .mobile-hint{display:none}   /* shown only on mobile while the bar is collapsed (see media query) */
   .pbody{padding:14px 18px 16px;overflow-y:auto}
 
   .group{margin-bottom:16px}
-  .label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;margin-bottom:7px}
+  .label{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;margin-bottom:7px}
 
   .seg{display:flex;border:1px solid var(--cool);border-radius:3px;overflow:hidden}
   .seg button{flex:1;border:0;background:transparent;color:var(--cool);font-family:var(--sans);font-size:12.5px;font-weight:600;padding:8px 4px;cursor:pointer;transition:.15s}
@@ -54,7 +54,7 @@
   .seg.ember button{color:var(--ember)}
   .seg.ember button + button{border-left-color:var(--ember)}
   .seg.ember button.on{background:var(--ember);color:var(--paper)}
-  #plan button{font-size:11.5px;line-height:1.28;padding:8px 7px}
+  #plan button{font-size:12.5px;line-height:1.28;padding:8px 7px}
 
   select{width:100%;font-family:var(--sans);font-size:13px;padding:8px 9px;border:1px solid var(--rule);border-radius:3px;background:var(--paper-2);color:var(--ink);cursor:pointer}
 
@@ -64,7 +64,7 @@
   .toggle input::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:var(--paper);transition:.18s}
   .toggle input:checked::after{left:17px}
   .toggle .tx{font-size:12.5px;line-height:1.25}
-  .toggle .tx small{display:block;color:var(--ink-soft);font-size:10.5px}
+  .toggle .tx small{display:block;color:var(--ink-soft);font-size:11.5px}
 
   hr{border:0;border-top:1px solid var(--rule);margin:15px 0}
 
@@ -78,34 +78,34 @@
 
   .stat{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px dotted var(--rule)}
   .stat:last-child{border-bottom:0}
-  .stat .k{font-size:11.5px;color:var(--ink-soft);max-width:50%}
+  .stat .k{font-size:12.5px;color:var(--ink-soft);max-width:50%}
   .stat .v{font-family:var(--mono);font-size:14px;font-weight:600;text-align:right;color:var(--ink)}
   .stat .v.ember{color:var(--ember)}
-  .stat .v small{font-family:var(--sans);font-weight:400;font-size:10px;color:var(--ink-soft);display:block}
+  .stat .v small{font-family:var(--sans);font-weight:400;font-size:11px;color:var(--ink-soft);display:block}
 
-  .note{font-size:10.5px;color:var(--ink-soft);line-height:1.4;font-style:italic;margin-top:8px}
-  .src{font-family:var(--mono);font-size:10px;color:var(--ink-soft);line-height:1.55}
+  .note{font-size:11.5px;color:var(--ink-soft);line-height:1.4;font-style:italic;margin-top:8px}
+  .src{font-family:var(--mono);font-size:11px;color:var(--ink-soft);line-height:1.55}
   .src b{color:var(--ink)} .src p{margin:0 0 7px}
 
   .gloss{margin-top:8px}
   .gloss dt{font-family:var(--sans);font-weight:600;font-size:12px;color:var(--ink);margin-top:10px}
-  .gloss dd{margin:2px 0 0;font-size:11px;line-height:1.45;color:var(--ink-soft)}
+  .gloss dd{margin:2px 0 0;font-size:12px;line-height:1.45;color:var(--ink-soft)}
 
   .landlist{margin:2px 0 0;padding-left:18px}
-  .landlist li{font-size:11.5px;line-height:1.46;color:var(--ink-soft);margin-bottom:7px}
+  .landlist li{font-size:12.5px;line-height:1.46;color:var(--ink-soft);margin-bottom:7px}
   .landlist li b{color:var(--ink);font-weight:600}
 
   details{margin-top:6px}
-  summary{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--cool);cursor:pointer;font-weight:600;padding:4px 0}
+  summary{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--cool);cursor:pointer;font-weight:600;padding:4px 0}
   summary::marker{color:var(--ember)}
 
   .disclaimer{margin-top:14px;padding-top:12px;border-top:1px solid var(--rule);font-size:10px;line-height:1.45;color:var(--ink-soft)}
 
-  #legend{position:absolute;bottom:14px;right:14px;z-index:1000;background:var(--paper);border:1px solid var(--rule);border-radius:4px;box-shadow:var(--shadow);padding:10px 12px;font-size:11px;max-width:235px}
+  #legend{position:absolute;bottom:14px;right:14px;z-index:1000;background:var(--paper);border:1px solid var(--rule);border-radius:4px;box-shadow:var(--shadow);padding:10px 12px;font-size:12px;max-width:235px}
   #legend .row{display:flex;align-items:center;gap:8px;margin:4px 0}
   #legend .sw{width:16px;height:11px;border-radius:2px;flex:none}
-  #legend .ttl{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:5px;font-weight:600}
-  #legend .legend-ver{margin-top:8px;padding-top:6px;border-top:1px solid var(--rule);font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--muted);text-align:right}
+  #legend .ttl{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:5px;font-weight:600}
+  #legend .legend-ver{margin-top:8px;padding-top:6px;border-top:1px solid var(--rule);font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--muted);text-align:right}
 
   #collapse{position:absolute;top:12px;right:12px;border:1px solid var(--rule);background:var(--paper-2);border-radius:3px;width:26px;height:26px;cursor:pointer;font-size:15px;line-height:1;color:var(--ink-soft)}
   body.collapsed #panel .pbody{display:none}
@@ -117,18 +117,18 @@
   @keyframes pulse{0%{transform:scale(1);opacity:.55}100%{transform:scale(5.5);opacity:0}}
 
   .zone-tip{width:250px!important;max-width:80vw!important;white-space:normal!important;font-family:var(--sans);font-size:12px;line-height:1.5;color:var(--ink);background:var(--paper);border:1px solid var(--ember);border-radius:5px;padding:12px 14px;box-shadow:var(--shadow)}
-  .zone-tip b{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ember);margin-bottom:7px}
+  .zone-tip b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ember);margin-bottom:7px}
   .zone-tip.leaflet-tooltip-top:before{border-top-color:var(--ember)}
   .zone-tip.leaflet-tooltip-bottom:before{border-bottom-color:var(--ember)}
 
   /* tap-to-open version of the zone explainer, used on touch devices */
   .zone-pop .leaflet-popup-content-wrapper{background:var(--paper);border:1px solid var(--ember);border-radius:6px;box-shadow:var(--shadow)}
   .zone-pop .leaflet-popup-content{margin:13px 15px;font-family:var(--sans);font-size:13.5px;line-height:1.5;color:var(--ink)}
-  .zone-pop .leaflet-popup-content b{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ember);margin-bottom:7px}
+  .zone-pop .leaflet-popup-content b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ember);margin-bottom:7px}
   .zone-pop .leaflet-popup-tip{background:var(--paper);border:1px solid var(--ember)}
   .zone-pop a.leaflet-popup-close-button{color:var(--ink-soft);font-size:20px;width:26px;height:26px;padding:5px 0 0}
 
-  .parcel-lbl{background:rgba(244,239,230,.92)!important;border:1px solid var(--rule)!important;border-radius:3px;box-shadow:none!important;font-family:var(--mono);font-size:9px;line-height:1.25;color:var(--ink-soft);font-weight:600;text-align:center;padding:3px 6px}
+  .parcel-lbl{background:rgba(244,239,230,.92)!important;border:1px solid var(--rule)!important;border-radius:3px;box-shadow:none!important;font-family:var(--mono);font-size:10px;line-height:1.25;color:var(--ink-soft);font-weight:600;text-align:center;padding:3px 6px}
   .parcel-lbl:before{display:none!important}
 
   @media (max-width:560px){
@@ -141,9 +141,9 @@
     body.collapsed #panel{max-height:none}
     body.collapsed .phead{padding:12px 46px 12px 16px}
     body.collapsed h1{font-size:18px;margin:1px 0 0}
-    body.collapsed .kicker{font-size:9px}
+    body.collapsed .kicker{font-size:10px}
     body.collapsed .sub{display:none}
-    body.collapsed .mobile-hint{display:block;margin-top:8px;padding:8px 11px;background:rgba(193,54,29,.07);border-left:3px solid var(--ember);border-radius:0 3px 3px 0;font-size:11.5px;line-height:1.4;color:var(--ink)}
+    body.collapsed .mobile-hint{display:block;margin-top:8px;padding:8px 11px;background:rgba(193,54,29,.07);border-left:3px solid var(--ember);border-radius:0 3px 3px 0;font-size:12.5px;line-height:1.4;color:var(--ink)}
   }
 </style>
 </head>
@@ -280,7 +280,7 @@
    STRATOS, TO SCALE  —  v3 (accurate acreage + parcels view)
    Single-file. Leaflet only. Deploys as-is on GitHub Pages.
 ---------------------------------------------------------------------- */
-const VERSION = 'v1.3';          // bump on every code change so a fresh deploy is obvious
+const VERSION = 'v1.5';          // bump on every code change so a fresh deploy is obvious
 const ACRE_M2 = 4046.8564;
 const MI_M = 1609.34;
 
@@ -303,9 +303,9 @@ const DEV_TIP = 'Developed area · ~10,000 acres (data center + power; Phase 1 b
 
 // The three real parcels. Sizes accurate; offsets are an APPROXIMATE relative layout.
 const PARCELS = [
-  { name:'Hansel Valley',      acres:20000, dN:0,      dE:0,      kept:true  },  // SE anchor, kept
-  { name:'Locomotive Springs', acres:19430, dN:24000,  dE:-6000,  kept:false },  // north, removed
-  { name:'I-84 strip',         acres:620,   dN:-5000,  dE:-24000, kept:false }   // west, removed
+  { name:'Hansel Valley',      acres:20000, dN:0,       dE:0,      kept:true  },  // data-center site (kept) — reference point
+  { name:'Locomotive Springs', acres:19430, dN:-3000,   dE:-29000, kept:false },  // WEST — at the Great Salt Lake's NW arm (removed)
+  { name:'I-84 strip',         acres:620,   dN:23000,   dE:-6000,  kept:false }   // NORTH — abutting I-84 (removed)
 ];
 
 const CITIES = {
