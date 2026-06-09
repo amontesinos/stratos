@@ -137,11 +137,8 @@
     h1{font-size:22px}
     .phead{cursor:pointer;padding-right:46px}      /* whole bar toggles; room for the chevron */
     #collapse{width:34px;height:34px;font-size:18px;top:10px;right:10px}
-    /* collapsed = slim title bar so the map is usable */
+    /* collapsed = header only (body hidden) so the map stays visible */
     body.collapsed #panel{max-height:none}
-    body.collapsed .phead{padding:12px 46px 12px 16px}
-    body.collapsed h1{font-size:18px;margin:1px 0 0}
-    body.collapsed .kicker{font-size:10px}
     body.collapsed .sub{display:none}
     body.collapsed .mobile-hint{display:block;margin-top:8px;padding:8px 11px;background:rgba(193,54,29,.07);border-left:3px solid var(--ember);border-radius:0 3px 3px 0;font-size:12.5px;line-height:1.4;color:var(--ink)}
   }
@@ -231,7 +228,7 @@
     <details>
       <summary>About the data ▸</summary>
       <div class="src" style="margin-top:8px">
-        <p><b>Exact:</b> footprint area is pure geometry (1 ac = 4,046.86 m²). Shapes are area-accurate but illustrative. Switch to <b>Real parcels</b> for the actual three-parcel layout: the central one is Hansel Valley (kept); the two outliers — Locomotive Springs (~19,430 ac, north) and a small strip by I-84 (~620 ac, west) — were dropped in the June 2026 cut. Parcel <i>sizes</i> are to scale; their spacing and exact shape are approximate.</p>
+        <p><b>Exact:</b> footprint area is pure geometry (1 acre = 4,046.86 m²). Shapes are area-accurate but illustrative. Switch to <b>Real parcels</b> for the actual three-parcel layout: the central one is Hansel Valley (kept); the two outliers — Locomotive Springs (~19,430 acres, north) and a small strip by I-84 (~620 acres, west) — were dropped in the June 2026 cut. Parcel <i>sizes</i> are to scale; their spacing and exact shape are approximate.</p>
         <p><b>Acreage:</b> the project area was ~40,000 acres across three parcels; on June 4, 2026 the developer agreed to cut it to ~20,000 (one parcel). Of that, about 10,000 acres would actually be developed and ~10,000 set aside; Phase 1 buildings are under 2,000 acres.</p>
         <p><b>Sourced estimates:</b> water, CO₂ and NOx are Utah Clean Energy modeling (May 2026) across two possible gas technologies. Power-generation only — excludes data-center cooling water and methane leakage. The developer hasn't confirmed which technology.</p>
         <p><b>Heat & temperature:</b> from Dr. Rob Davies' preliminary thermal analysis, published by Grow the Flow (May 7, 2026). Assuming a 55%-efficient gas plant with industrial "dry cooling," he estimates a ~16 GW thermal load (9 GW computing + 7–8 GW waste heat) and, for Hansel Valley's bowl-shaped basin, daytime warming of +2–5°F and nighttime warming of +8–12°F (heat trapped at night by temperature inversions). BYU ecologist Ben Abbott — executive director of Grow the Flow — independently reviewed the work. It is still preliminary and not formally peer-reviewed; Abbott says the full facility details are needed to confirm it. Some early coverage cited a higher +28°F worst-case night figure that is <b>not</b> in the analysts' summary, so this tool uses their +8–12°F range. The impact zone is illustrative — heat and air quality fall off with distance — and does not change between the 40k and 20k plans because the 9 GW doesn't.</p>
@@ -262,7 +259,7 @@
       </dl>
     </details>
 
-    <div class="disclaimer">Independent project — not affiliated with Stratos, O'Leary Digital, MIDA, or any government agency. The real site is in Hansel Valley, Box Elder County. All figures are sourced estimates; see “About the data.”<br><span id="verFoot" style="opacity:.7"></span></div>
+    <div class="disclaimer">Data current as of <span id="dataDate"></span> — a developing story; details may change. Independent project — not affiliated with Stratos, O'Leary Digital, MIDA, or any government agency. The real site is in Hansel Valley, Box Elder County. All figures are sourced estimates; see “About the data.”<br><span id="verFoot" style="opacity:.7"></span></div>
   </div>
 </div>
 
@@ -280,7 +277,8 @@
    STRATOS, TO SCALE  —  v3 (accurate acreage + parcels view)
    Single-file. Leaflet only. Deploys as-is on GitHub Pages.
 ---------------------------------------------------------------------- */
-const VERSION = 'v1.5';          // bump on every code change so a fresh deploy is obvious
+const VERSION = 'v1.7';          // bump on every code change so a fresh deploy is obvious
+const DATA_DATE = 'June 8, 2026'; // update ONLY when the facts are re-verified — do not auto-set to today
 const ACRE_M2 = 4046.8564;
 const MI_M = 1609.34;
 
@@ -442,7 +440,7 @@ function renderShapes(){
       if(i>0){
         L.tooltip({permanent:true,direction:'center',className:'parcel-lbl',interactive:false})
           .setLatLng(pcCenter)
-          .setContent(pc.name+'<br>'+pc.acres.toLocaleString()+' ac'+(dropped?' · removed':''))
+          .setContent(pc.name+'<br>'+pc.acres.toLocaleString()+' acres'+(dropped?' · removed':''))
           .addTo(footprintLayer);
       }
     });
@@ -533,6 +531,7 @@ if(isMobile()) setCollapsed(true);
 /* ---------- go ---------- */
 document.getElementById('ver').textContent = VERSION;
 document.getElementById('verFoot').textContent = VERSION;
+document.getElementById('dataDate').textContent = DATA_DATE;
 updateStats();
 renderShapes();
 </script>
