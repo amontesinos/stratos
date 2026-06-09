@@ -287,7 +287,7 @@
    STRATOS, TO SCALE  —  single-file civic visualization (see VERSION below)
    Single-file. Leaflet only. Deploys as-is on GitHub Pages.
 ---------------------------------------------------------------------- */
-const VERSION = 'v1.9';          // bump on every code change so a fresh deploy is obvious
+const VERSION = 'v1.10';          // bump on every code change so a fresh deploy is obvious
 const DATA_DATE = 'June 8, 2026'; // update ONLY when the facts are re-verified — do not auto-set to today
 const ACRE_M2 = 4046.8564;
 const MI_M = 1609.34;
@@ -420,21 +420,26 @@ function renderShapes(){
     };
     [[6,.05],[4,.09],[2,.14]].forEach(([mi,op])=>{
       const zc = L.circle(c,{radius:mi*MI_M,stroke:false,fillColor:'#c1361d',fillOpacity:op}).addTo(impactLayer);
-      // Tap (mobile) / click (desktop): popup. Auto-pans on-screen, has a close button.
-      zc.bindPopup(ZONES[mi], {
-        className:'zone-pop',
-        maxWidth: Math.min(300, window.innerWidth - 48),
-        autoPan:true,
-        autoPanPaddingTopLeft:[14,68],       // clear the collapsed title bar
-        autoPanPaddingBottomRight:[14,20],
-        closeButton:true
-      });
-      // Desktop hover preview: tooltip pinned ABOVE the cursor. A FIXED direction never
-      // flips sides — Leaflet only auto-flips when direction is 'auto'. This removes the
-      // left/right flip glitch at the root. Suppressed on touch + while the popup is open.
+      // Desktop: hover tooltip pinned ABOVE the cursor. A FIXED direction never flips sides
+      // (Leaflet only auto-flips 'auto'), which kills the old left/right flip glitch.
+      // Suppressed on touch, where there's no hover.
       zc.bindTooltip(ZONES[mi], {sticky:true, className:'zone-tip', direction:'top', offset:[0,-2]});
-      zc.on('tooltipopen', ()=>{ if(POINTER!=='mouse' || zc.isPopupOpen()) zc.closeTooltip(); });
-      zc.on('popupopen',  ()=> zc.closeTooltip());
+      zc.on('tooltipopen', ()=>{ if(POINTER!=='mouse') zc.closeTooltip(); });
+      // Touch: a tap opens a popup (close button + auto-pans on-screen). On mouse we skip the
+      // popup entirely — the hover tooltip already shows this exact text, so a click-popup just
+      // duplicated it. (Footprints are non-interactive, so taps inside the blob reach the zones.)
+      zc.on('click', e=>{
+        if(POINTER==='mouse') return;
+        zc.closeTooltip();
+        L.popup({
+          className:'zone-pop',
+          maxWidth: Math.min(300, window.innerWidth - 48),
+          autoPan:true,
+          autoPanPaddingTopLeft:[14,68],       // clear the collapsed title bar
+          autoPanPaddingBottomRight:[14,20],
+          closeButton:true
+        }).setLatLng(e.latlng).setContent(ZONES[mi]).openOn(map);
+      });
     });
     L.circle(c,{radius:6*MI_M,fill:false,color:'#c1361d',weight:1.5,dashArray:'5 5',interactive:false}).addTo(impactLayer);
   }
