@@ -4,6 +4,15 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <title>Stratos, to Scale</title>
+<meta name="description" content="An independent, to-scale look at the proposed Stratos Project data center in Box Elder County, Utah — drag its footprint onto any Utah town and see the sourced impacts on water, air, and heat." />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Stratos, to Scale" />
+<meta property="og:description" content="See the size and impact of the proposed 9-gigawatt Stratos data center in Box Elder County, Utah — to scale, on a map of your town. Every figure sourced." />
+<meta property="og:url" content="https://stratostoscale.org" />
+<meta property="og:site_name" content="Stratos, to Scale" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Stratos, to Scale" />
+<meta name="twitter:description" content="See the size and impact of the proposed 9-gigawatt Stratos data center in Box Elder County, Utah — to scale, on a map of your town." />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>" />
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
@@ -121,7 +130,7 @@
   .zone-tip.leaflet-tooltip-top:before{border-top-color:var(--ember)}
   .zone-tip.leaflet-tooltip-bottom:before{border-bottom-color:var(--ember)}
 
-  /* tap-to-open version of the zone explainer, used on touch devices */
+  /* popup version of the zone explainer (tap on mobile, click on desktop) */
   .zone-pop .leaflet-popup-content-wrapper{background:var(--paper);border:1px solid var(--ember);border-radius:6px;box-shadow:var(--shadow)}
   .zone-pop .leaflet-popup-content{margin:13px 15px;font-family:var(--sans);font-size:13.5px;line-height:1.5;color:var(--ink)}
   .zone-pop .leaflet-popup-content b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ember);margin-bottom:7px}
@@ -228,7 +237,7 @@
     <details>
       <summary>About the data ▸</summary>
       <div class="src" style="margin-top:8px">
-        <p><b>Exact:</b> footprint area is pure geometry (1 acre = 4,046.86 m²). Shapes are area-accurate but illustrative. Switch to <b>Real parcels</b> for the actual three-parcel layout: the central one is Hansel Valley (kept); the two outliers — Locomotive Springs (~19,430 acres, north) and a small strip by I-84 (~620 acres, west) — were dropped in the June 2026 cut. Parcel <i>sizes</i> are to scale; their spacing and exact shape are approximate.</p>
+        <p><b>Exact:</b> footprint area is pure geometry (1 acre = 4,046.86 m²). Shapes are area-accurate but illustrative. Switch to <b>Real parcels</b> for the actual three-parcel layout: the central one is Hansel Valley (kept); the two outliers — Locomotive Springs (~19,430 acres, to the west by the Great Salt Lake) and a small strip by I-84 (~620 acres, to the north) — were dropped in the June 2026 cut. Parcel <i>sizes</i> are to scale; their spacing and exact shape are approximate.</p>
         <p><b>Acreage:</b> the project area was ~40,000 acres across three parcels; on June 4, 2026 the developer agreed to cut it to ~20,000 (one parcel). Of that, about 10,000 acres would actually be developed and ~10,000 set aside; Phase 1 buildings are under 2,000 acres.</p>
         <p><b>Sourced estimates:</b> water, CO₂ and NOx are Utah Clean Energy modeling (May 2026) across two possible gas technologies. Power-generation only — excludes data-center cooling water and methane leakage. The developer hasn't confirmed which technology.</p>
         <p><b>Heat & temperature:</b> from Dr. Rob Davies' preliminary thermal analysis, published by Grow the Flow (May 7, 2026). Assuming a 55%-efficient gas plant with industrial "dry cooling," he estimates a ~16 GW thermal load (9 GW computing + 7–8 GW waste heat) and, for Hansel Valley's bowl-shaped basin, daytime warming of +2–5°F and nighttime warming of +8–12°F (heat trapped at night by temperature inversions). BYU ecologist Ben Abbott — executive director of Grow the Flow — independently reviewed the work. It is still preliminary and not formally peer-reviewed; Abbott says the full facility details are needed to confirm it. Some early coverage cited a higher +28°F worst-case night figure that is <b>not</b> in the analysts' summary, so this tool uses their +8–12°F range. The impact zone is illustrative — heat and air quality fall off with distance — and does not change between the 40k and 20k plans because the 9 GW doesn't.</p>
@@ -274,10 +283,10 @@
 
 <script>
 /* ----------------------------------------------------------------------
-   STRATOS, TO SCALE  —  v3 (accurate acreage + parcels view)
+   STRATOS, TO SCALE  —  single-file civic visualization (see VERSION below)
    Single-file. Leaflet only. Deploys as-is on GitHub Pages.
 ---------------------------------------------------------------------- */
-const VERSION = 'v1.7';          // bump on every code change so a fresh deploy is obvious
+const VERSION = 'v1.8';          // bump on every code change so a fresh deploy is obvious
 const DATA_DATE = 'June 8, 2026'; // update ONLY when the facts are re-verified — do not auto-set to today
 const ACRE_M2 = 4046.8564;
 const MI_M = 1609.34;
