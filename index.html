@@ -137,7 +137,7 @@
   .zone-pop .leaflet-popup-tip{background:var(--paper);border:1px solid var(--ember)}
   .zone-pop a.leaflet-popup-close-button{color:var(--ink-soft);font-size:20px;width:26px;height:26px;padding:5px 0 0}
 
-  .parcel-lbl{background:rgba(244,239,230,.92)!important;border:1px solid var(--rule)!important;border-radius:3px;box-shadow:none!important;font-family:var(--mono);font-size:10px;line-height:1.25;color:var(--ink-soft);font-weight:600;text-align:center;padding:3px 6px}
+  .parcel-lbl{background:rgba(244,239,230,.92)!important;border:1px solid var(--rule)!important;border-radius:3px;box-shadow:none!important;font-family:var(--mono);font-size:11px;line-height:1.25;color:var(--ink-soft);font-weight:600;text-align:center;padding:3px 6px}
   .parcel-lbl:before{display:none!important}
 
   @media (max-width:560px){
@@ -196,6 +196,7 @@
       <div class="label">Layers</div>
       <label class="toggle"><input type="checkbox" id="tImpact" checked><span class="tx">Local impact zone<small>illustrative · same under both plans</small></span></label>
       <label class="toggle"><input type="checkbox" id="tDev" checked><span class="tx">Developed area<small>~10,000 acres actually built on — roughly the same under both plans</small></span></label>
+      <label class="toggle"><input type="checkbox" id="tLabels" checked><span class="tx">Map labels<small>names and acreage shown on each area</small></span></label>
     </div>
 
     <div class="compare" id="compare">—</div>
@@ -286,7 +287,7 @@
    STRATOS, TO SCALE  —  single-file civic visualization (see VERSION below)
    Single-file. Leaflet only. Deploys as-is on GitHub Pages.
 ---------------------------------------------------------------------- */
-const VERSION = 'v1.8';          // bump on every code change so a fresh deploy is obvious
+const VERSION = 'v1.9';          // bump on every code change so a fresh deploy is obvious
 const DATA_DATE = 'June 8, 2026'; // update ONLY when the facts are re-verified — do not auto-set to today
 const ACRE_M2 = 4046.8564;
 const MI_M = 1609.34;
@@ -306,7 +307,6 @@ const PLANS = {
   '40k': { acres: 40000, label: '40,000-acre plan (original)' }
 };
 const BUILT_ACRES = 10000; // developed area (data center + power). ~same under both plans.
-const DEV_TIP = 'Developed area · ~10,000 acres (data center + power; Phase 1 buildings under 2,000) — about the same under both plans';
 
 // The three real parcels. Sizes accurate; offsets are an APPROXIMATE relative layout.
 const PARCELS = [
@@ -351,7 +351,7 @@ const footprintLayer = L.layerGroup().addTo(map);
 /* ---------- state ---------- */
 const state = {
   plan:'20k', view:'blob', cityKey:'slc', center:L.latLng(CITIES.slc.ll),
-  showDev:true, showImpact:true, scenario:'cct'
+  showDev:true, showImpact:true, showLabels:true, scenario:'cct'
 };
 
 /* ---------- organic blob geometry ---------- */
@@ -389,6 +389,14 @@ function blobPoly(center, areaM2, blob){
 const BLOB = makeBlob(56, 0.17, 73);                 // single-blob view
 const PARCEL_BLOBS = [ makeBlob(50,0.18,11), makeBlob(52,0.21,29), makeBlob(40,0.24,57) ];
 
+// permanent, non-interactive map label (no hover/tap needed). Lives on footprintLayer so it clears each render.
+function addLabel(lat, lng, html){
+  L.tooltip({permanent:true, direction:'center', className:'parcel-lbl', interactive:false})
+    .setLatLng([lat, lng]).setContent(html).addTo(footprintLayer);
+}
+// [southmost lat, northmost lat] of a polygon — used to place a label near a blob's top/bottom
+function latRange(poly){ let lo=Infinity, hi=-Infinity; for(const p of poly){ if(p[0]<lo)lo=p[0]; if(p[0]>hi)hi=p[0]; } return [lo,hi]; }
+
 /* ---------- draggable handle ---------- */
 const handle = L.marker(state.center, {
   draggable:true, zIndexOffset:1000,
@@ -402,7 +410,6 @@ function renderShapes(){
   footprintLayer.clearLayers();
   impactLayer.clearLayers();
   const c = state.center;
-  const inter = !state.showImpact;   // footprints pass-through while impact zone is on
 
   // impact zone (fixed scale, plan- & view-independent)
   if(state.showImpact){
@@ -434,42 +441,59 @@ function renderShapes(){
 
   if(state.view==='parcels'){
     const coslat = Math.cos(c.lat*Math.PI/180);
+    const devCore = state.showDev ? blobPoly(c, BUILT_ACRES*ACRE_M2, PARCEL_BLOBS[0]) : null;
     PARCELS.forEach((pc,i)=>{
       const pcCenter = L.latLng(c.lat + pc.dN/111320, c.lng + pc.dE/(111320*coslat));
       const dropped = (state.plan==='20k' && !pc.kept);
-      L.polygon(blobPoly(pcCenter, pc.acres*ACRE_M2, PARCEL_BLOBS[i]),{
+      const poly = blobPoly(pcCenter, pc.acres*ACRE_M2, PARCEL_BLOBS[i]);
+      L.polygon(poly,{
         color: dropped?'#9a8f7c':'#2b3a55', weight: dropped?1.5:2,
         dashArray: dropped?'6 5':null,
         fillColor: dropped?'#9a8f7c':'#2b3a55',
         fillOpacity: dropped?0.05:(state.showImpact?0.10:0.16),
-        smoothFactor:1, interactive:inter
-      }).addTo(footprintLayer)
-        .bindTooltip(pc.name+' · '+pc.acres.toLocaleString()+' acres'+(dropped?' · removed in new plan':''),{sticky:true});
-      // label the two outlying parcels (the central Hansel Valley one is obvious)
-      if(i>0){
-        L.tooltip({permanent:true,direction:'center',className:'parcel-lbl',interactive:false})
-          .setLatLng(pcCenter)
-          .setContent(pc.name+'<br>'+pc.acres.toLocaleString()+' acres'+(dropped?' · removed':''))
-          .addTo(footprintLayer);
+        smoothFactor:1, interactive:false
+      }).addTo(footprintLayer);
+      if(state.showLabels){
+        if(i===0){
+          // Hansel Valley (kept, central): label near its top, kept clear of the developed core + handle
+          const [ , hi] = latRange(poly);
+          let la = pcCenter.lat + (hi - pcCenter.lat)*0.6;
+          if(devCore){ const [ , dhi] = latRange(devCore); la = dhi + (hi - dhi)*0.5; }
+          addLabel(la, pcCenter.lng, 'Hansel Valley<br>'+pc.acres.toLocaleString()+' acres');
+        } else {
+          addLabel(pcCenter.lat, pcCenter.lng, pc.name+'<br>'+pc.acres.toLocaleString()+' acres'+(dropped?' · removed':''));
+        }
       }
     });
     // developed core inside Hansel Valley (parcel-0 shape so it nests cleanly)
-    if(state.showDev){
-      L.polygon(blobPoly(c, BUILT_ACRES*ACRE_M2, PARCEL_BLOBS[0]),{
-        color:'#1d2942', weight:1.5, fillColor:'#1d2942', fillOpacity:0.34, smoothFactor:1, interactive:inter
-      }).addTo(footprintLayer).bindTooltip(DEV_TIP,{sticky:true});
+    if(devCore){
+      L.polygon(devCore,{
+        color:'#1d2942', weight:1.5, fillColor:'#1d2942', fillOpacity:0.34, smoothFactor:1, interactive:false
+      }).addTo(footprintLayer);
+      if(state.showLabels){ const [lo] = latRange(devCore); addLabel(c.lat + (lo - c.lat)*0.5, c.lng, 'Developed area<br>~10,000 acres'); }
     }
   } else {
     // single-blob view
     const areaM2 = PLANS[state.plan].acres * ACRE_M2;
-    L.polygon(blobPoly(c, areaM2, BLOB),{
-      color:'#2b3a55', weight:2, fillColor:'#2b3a55', fillOpacity:state.showImpact?0.10:0.16, smoothFactor:1, interactive:inter
-    }).addTo(footprintLayer)
-      .bindTooltip(PLANS[state.plan].label+' · '+(areaM2/1e6).toFixed(0)+' km²',{sticky:true});
-    if(state.showDev){
-      L.polygon(blobPoly(c, BUILT_ACRES*ACRE_M2, BLOB),{
-        color:'#1d2942', weight:1.5, fillColor:'#1d2942', fillOpacity:0.34, smoothFactor:1, interactive:inter
-      }).addTo(footprintLayer).bindTooltip(DEV_TIP,{sticky:true});
+    const proj = blobPoly(c, areaM2, BLOB);
+    L.polygon(proj,{
+      color:'#2b3a55', weight:2, fillColor:'#2b3a55', fillOpacity:state.showImpact?0.10:0.16, smoothFactor:1, interactive:false
+    }).addTo(footprintLayer);
+    const dev = state.showDev ? blobPoly(c, BUILT_ACRES*ACRE_M2, BLOB) : null;
+    if(dev){
+      L.polygon(dev,{
+        color:'#1d2942', weight:1.5, fillColor:'#1d2942', fillOpacity:0.34, smoothFactor:1, interactive:false
+      }).addTo(footprintLayer);
+    }
+    if(state.showLabels){
+      const [ , projHi] = latRange(proj);
+      let projLat = c.lat + (projHi - c.lat)*0.6;          // upper part of the blob (no dev layer)
+      if(dev){
+        const [devLo, devHi] = latRange(dev);
+        projLat = devHi + (projHi - devHi)*0.5;            // sit in the ring, above the developed blob
+        addLabel(c.lat + (devLo - c.lat)*0.5, c.lng, 'Developed area<br>~10,000 acres');  // below the handle
+      }
+      addLabel(projLat, c.lng, 'Project area<br>'+PLANS[state.plan].acres.toLocaleString()+' acres');
     }
   }
   updateCompare();
@@ -520,6 +544,7 @@ document.querySelectorAll('#scenario button').forEach(b=>{
 });
 document.getElementById('tDev').addEventListener('change', e=>{state.showDev=e.target.checked; renderShapes();});
 document.getElementById('tImpact').addEventListener('change', e=>{state.showImpact=e.target.checked; renderShapes();});
+document.getElementById('tLabels').addEventListener('change', e=>{state.showLabels=e.target.checked; renderShapes();});
 
 const isMobile = ()=> window.matchMedia('(max-width:560px)').matches;
 function setCollapsed(v){
