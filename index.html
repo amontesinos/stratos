@@ -40,6 +40,8 @@
   .kicker{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ember);font-weight:600}
   h1{font-family:var(--serif);font-weight:900;font-size:27px;line-height:.98;margin:5px 0 4px;letter-spacing:-.01em}
   .sub{font-size:11.5px;color:var(--ink-soft);line-height:1.35}
+  .mobile-hint{display:none}   /* shown only on mobile while the bar is collapsed (see media query) */
+  .mobile-hint{display:none}
   .pbody{padding:14px 18px 16px;overflow-y:auto}
 
   .group{margin-bottom:16px}
@@ -142,6 +144,8 @@
     body.collapsed h1{font-size:18px;margin:1px 0 0}
     body.collapsed .kicker{font-size:9px}
     body.collapsed .sub{display:none}
+    body.collapsed .mobile-hint{display:block;margin-top:7px;font-size:11.5px;line-height:1.4;color:var(--ink-soft);font-weight:400}
+    body.collapsed .mobile-hint{display:block;margin-top:8px;padding:8px 11px;background:rgba(193,54,29,.07);border-left:3px solid var(--ember);border-radius:0 3px 3px 0;font-size:11.5px;line-height:1.4;color:var(--ink)}
   }
 </style>
 </head>
@@ -153,7 +157,9 @@
   <div class="phead">
     <div class="kicker">Box Elder County, Utah</div>
     <h1>Stratos, to Scale</h1>
+    <div class="mobile-hint">Tap the red zones around the data center blob to see the effects. Expand this bar for statistics.</div>
     <div class="sub">Drag the data center onto any Utah town. Every impact figure below is sourced — open “About the data.”</div>
+    <div class="mobile-hint">Tap the red zones around the data center blob to see the effects. Expand this bar for statistics.</div>
   </div>
 
   <div class="pbody">
@@ -277,7 +283,7 @@
    STRATOS, TO SCALE  —  v3 (accurate acreage + parcels view)
    Single-file. Leaflet only. Deploys as-is on GitHub Pages.
 ---------------------------------------------------------------------- */
-const VERSION = 'v1.1';          // bump on every code change so a fresh deploy is obvious
+const VERSION = 'v1.2';          // bump on every code change so a fresh deploy is obvious
 const ACRE_M2 = 4046.8564;
 const MI_M = 1609.34;
 
