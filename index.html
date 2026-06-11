@@ -287,7 +287,7 @@
    STRATOS, TO SCALE  —  single-file civic visualization (see VERSION below)
    Single-file. Leaflet only. Deploys as-is on GitHub Pages.
 ---------------------------------------------------------------------- */
-const VERSION = 'v1.10';          // bump on every code change so a fresh deploy is obvious
+const VERSION = 'v1.11';          // bump on every code change so a fresh deploy is obvious
 const DATA_DATE = 'June 8, 2026'; // update ONLY when the facts are re-verified — do not auto-set to today
 const ACRE_M2 = 4046.8564;
 const MI_M = 1609.34;
@@ -397,6 +397,23 @@ function addLabel(lat, lng, html){
 // [southmost lat, northmost lat] of a polygon — used to place a label near a blob's top/bottom
 function latRange(poly){ let lo=Infinity, hi=-Infinity; for(const p of poly){ if(p[0]<lo)lo=p[0]; if(p[0]>hi)hi=p[0]; } return [lo,hi]; }
 
+// --- label fit-testing -------------------------------------------------------
+// Labels are DOM elements with a FIXED pixel size, while the shapes scale with
+// zoom — so zoomed out, a label can dwarf the shape it names. Cartographic rule:
+// a label may only appear if its feature can visually contain it. We measure each
+// shape's on-screen width and pick a tier: full (name + acres) → compact (name
+// only) → none. Re-evaluated on every render and on zoomend.
+function pxW(poly){ let lo=Infinity, hi=-Infinity; for(const p of poly){ const x=map.latLngToLayerPoint(p).x; if(x<lo)lo=x; if(x>hi)hi=x; } return hi-lo; }
+// approximate rendered width of a label's widest line (11px IBM Plex Mono ≈ 6.7px/char + padding)
+function lblPx(html){ return Math.max(...html.split('<br>').map(s=>s.length))*6.7 + 16; }
+// the label HTML this shape can carry at the current zoom, or null for none
+function fitLabel(poly, full, mini){
+  const w = pxW(poly);
+  if(w >= lblPx(full)*1.4) return full;   // room to breathe around the full label
+  if(w >= lblPx(mini)*1.1) return mini;   // tight fit: drop the acreage line
+  return null;                            // shape too small on screen — no label
+}
+
 /* ---------- draggable handle ---------- */
 const handle = L.marker(state.center, {
   draggable:true, zIndexOffset:1000,
@@ -404,6 +421,9 @@ const handle = L.marker(state.center, {
 }).addTo(map);
 handle.on('drag', e => { state.center = e.target.getLatLng(); renderShapes(); });
 handle.bindTooltip('Drag me onto your town', {direction:'top', offset:[0,-10]});
+
+// shapes scale with zoom but labels don't — re-fit them whenever the zoom settles
+map.on('zoomend', renderShapes);
 
 /* ---------- render ---------- */
 function renderShapes(){
@@ -459,14 +479,17 @@ function renderShapes(){
         smoothFactor:1, interactive:false
       }).addTo(footprintLayer);
       if(state.showLabels){
-        if(i===0){
-          // Hansel Valley (kept, central): label near its top, kept clear of the developed core + handle
-          const [ , hi] = latRange(poly);
-          let la = pcCenter.lat + (hi - pcCenter.lat)*0.6;
-          if(devCore){ const [ , dhi] = latRange(devCore); la = dhi + (hi - dhi)*0.5; }
-          addLabel(la, pcCenter.lng, 'Hansel Valley<br>'+pc.acres.toLocaleString()+' acres');
-        } else {
-          addLabel(pcCenter.lat, pcCenter.lng, pc.name+'<br>'+pc.acres.toLocaleString()+' acres'+(dropped?' · removed':''));
+        const html = fitLabel(poly, pc.name+'<br>'+pc.acres.toLocaleString()+' acres'+(dropped?' · removed':''), pc.name);
+        if(html){
+          if(i===0){
+            // Hansel Valley (kept, central): label near its top, kept clear of the developed core + handle
+            const [ , hi] = latRange(poly);
+            let la = pcCenter.lat + (hi - pcCenter.lat)*0.6;
+            if(devCore){ const [ , dhi] = latRange(devCore); la = dhi + (hi - dhi)*0.5; }
+            addLabel(la, pcCenter.lng, html);
+          } else {
+            addLabel(pcCenter.lat, pcCenter.lng, html);
+          }
         }
       }
     });
@@ -475,7 +498,10 @@ function renderShapes(){
       L.polygon(devCore,{
         color:'#1d2942', weight:1.5, fillColor:'#1d2942', fillOpacity:0.34, smoothFactor:1, interactive:false
       }).addTo(footprintLayer);
-      if(state.showLabels){ const [lo] = latRange(devCore); addLabel(c.lat + (lo - c.lat)*0.5, c.lng, 'Developed area<br>~10,000 acres'); }
+      if(state.showLabels){
+        const devHtml = fitLabel(devCore, 'Developed area<br>~10,000 acres', 'Developed area');
+        if(devHtml){ const [lo] = latRange(devCore); addLabel(c.lat + (lo - c.lat)*0.5, c.lng, devHtml); }
+      }
     }
   } else {
     // single-blob view
@@ -496,9 +522,11 @@ function renderShapes(){
       if(dev){
         const [devLo, devHi] = latRange(dev);
         projLat = devHi + (projHi - devHi)*0.5;            // sit in the ring, above the developed blob
-        addLabel(c.lat + (devLo - c.lat)*0.5, c.lng, 'Developed area<br>~10,000 acres');  // below the handle
+        const devHtml = fitLabel(dev, 'Developed area<br>~10,000 acres', 'Developed area');
+        if(devHtml) addLabel(c.lat + (devLo - c.lat)*0.5, c.lng, devHtml);   // below the handle
       }
-      addLabel(projLat, c.lng, 'Project area<br>'+PLANS[state.plan].acres.toLocaleString()+' acres');
+      const projHtml = fitLabel(proj, 'Project area<br>'+PLANS[state.plan].acres.toLocaleString()+' acres', 'Project area');
+      if(projHtml) addLabel(projLat, c.lng, projHtml);
     }
   }
   updateCompare();
